@@ -1,0 +1,26 @@
+[package]
+name = "candle_binding"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "C FFI bindings for candle ML framework"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candle-core = { path = "../../candle/candle-core" }
+candle-nn = { path = "../../candle/candle-nn" }
+candle-transformers = { path = "../../candle/candle-transformers" }
+hf-hub = "0.4.1"
+tokenizers = { version = "0.22.0", default-features = false, features = ["fancy-regex"] }
+safetensors = "0.7.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+libc = "0.2"
+anyhow = "1"
+image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
+tracing = "0.1"
+byteorder = "1"
+hound = "3.5"
+rand = "0.8"

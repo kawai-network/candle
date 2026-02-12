@@ -9,9 +9,9 @@ description = "C FFI bindings for candle ML framework"
 crate-type = ["cdylib"]
 
 [dependencies]
-candle-core = { path = "../../candle/candle-core" }
-candle-nn = { path = "../../candle/candle-nn" }
-candle-transformers = { path = "../../candle/candle-transformers" }
+candle-core = "0.9.2"
+candle-nn = "0.9.2"
+candle-transformers = "0.9.2"
 hf-hub = "0.4.1"
 tokenizers = { version = "0.22.0", default-features = false, features = ["fancy-regex"] }
 safetensors = "0.7.0"

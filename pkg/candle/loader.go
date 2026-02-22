@@ -268,6 +268,26 @@ func loadAllSymbols() error {
 		return err
 	}
 
+	// Video Generation
+	if fnNewVideoPipeline, err = loadSym("new_video_pipeline"); err != nil {
+		return err
+	}
+	if fnRunVideoGeneration, err = loadSym("run_video_generation"); err != nil {
+		return err
+	}
+	if fnFreeVideoPipeline, err = loadSym("free_video_pipeline"); err != nil {
+		return err
+	}
+	if fnFreeVideoResult, err = loadSym("free_video_result"); err != nil {
+		return err
+	}
+	if fnSaveVideoAsGif, err = loadSym("save_video_as_gif"); err != nil {
+		return err
+	}
+	if fnSaveVideoFrames, err = loadSym("save_video_frames"); err != nil {
+		return err
+	}
+
 	return nil
 }
 

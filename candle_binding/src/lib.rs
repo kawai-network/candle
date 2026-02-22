@@ -2,27 +2,29 @@ use std::cell::RefCell;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
-mod text_generation;
-mod embeddings;
-mod image_utils;
 mod classification;
 mod clip;
 mod depth;
+mod embeddings;
+mod image_utils;
 mod segmentation;
-mod whisper;
 mod t5;
+mod text_generation;
 mod translation;
+mod video;
+mod whisper;
 
 // Re-export FFI functions
-pub use text_generation::*;
-pub use embeddings::*;
 pub use classification::*;
 pub use clip::*;
 pub use depth::*;
+pub use embeddings::*;
 pub use segmentation::*;
-pub use whisper::*;
 pub use t5::*;
+pub use text_generation::*;
 pub use translation::*;
+pub use video::*;
+pub use whisper::*;
 
 // --- Thread-local error handling ---
 
@@ -41,11 +43,9 @@ pub(crate) fn set_last_error(msg: String) {
 /// The returned pointer is valid until the next FFI call on the same thread.
 #[no_mangle]
 pub extern "C" fn candle_last_error() -> *const c_char {
-    LAST_ERROR.with(|e| {
-        match e.borrow().as_ref() {
-            Some(s) => s.as_ptr(),
-            None => std::ptr::null(),
-        }
+    LAST_ERROR.with(|e| match e.borrow().as_ref() {
+        Some(s) => s.as_ptr(),
+        None => std::ptr::null(),
     })
 }
 
@@ -64,7 +64,9 @@ pub(crate) fn parse_config_json(config_json: *const c_char) -> Result<serde_json
         return Err("config_json is null".to_string());
     }
     let c_str = unsafe { CStr::from_ptr(config_json) };
-    let json_str = c_str.to_str().map_err(|e| format!("invalid UTF-8 in config: {e}"))?;
+    let json_str = c_str
+        .to_str()
+        .map_err(|e| format!("invalid UTF-8 in config: {e}"))?;
     serde_json::from_str(json_str).map_err(|e| format!("invalid JSON config: {e}"))
 }
 

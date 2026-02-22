@@ -51,9 +51,12 @@ impl TextGenModel for LlamaModel {
     }
     fn reset_cache(&mut self) {
         // Recreate the cache to clear it
-        if let Ok(cache) =
-            candle_transformers::models::llama::Cache::new(true, self.dtype, &self.config, &self.device)
-        {
+        if let Ok(cache) = candle_transformers::models::llama::Cache::new(
+            true,
+            self.dtype,
+            &self.config,
+            &self.device,
+        ) {
             self.cache = cache;
         }
     }

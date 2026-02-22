@@ -24,3 +24,5 @@ tracing = "0.1"
 byteorder = "1"
 hound = "3.5"
 rand = "0.8"
+gif = "0.14"
+candle-video = { git = "https://github.com/FerrisMind/candle-video", default-features = false }

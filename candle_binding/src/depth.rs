@@ -7,8 +7,8 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::depth_anything_v2::{DepthAnythingV2, DepthAnythingV2Config};
 use candle_transformers::models::dinov2;
 
-use crate::{json_str, parse_config_json, set_last_error, create_hf_repo};
 use crate::image_utils;
+use crate::{create_hf_repo, json_str, parse_config_json, set_last_error};
 
 const DINO_IMG_SIZE: usize = 518;
 
@@ -34,9 +34,7 @@ fn load_depth_model(
     // 2. Depth head (e.g. from "jeroenvlek/depth-anything-v2-safetensors")
     // OR user can specify a single model_id if the model bundles both.
 
-    let cache_dir = config
-        .get("cache_dir")
-        .and_then(|v| v.as_str());
+    let cache_dir = config.get("cache_dir").and_then(|v| v.as_str());
 
     // DINOv2 backbone
     let dinov2_model_id = json_str(config, "dinov2_model_id", "lmz/candle-dino-v2");
@@ -116,9 +114,7 @@ fn estimate_depth(
 }
 
 #[no_mangle]
-pub extern "C" fn new_depth_pipeline(
-    config_json: *const c_char,
-) -> *mut DepthPipelineWrapper {
+pub extern "C" fn new_depth_pipeline(config_json: *const c_char) -> *mut DepthPipelineWrapper {
     let config = match parse_config_json(config_json) {
         Ok(c) => c,
         Err(e) => {

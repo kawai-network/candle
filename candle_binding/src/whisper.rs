@@ -7,7 +7,10 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::whisper::{self as m, audio, Config};
 use rand::{distributions::WeightedIndex, prelude::Distribution, SeedableRng};
 
-use crate::{json_f64, json_str, json_u64, parse_config_json, set_last_error, create_hf_repo, load_weight_files};
+use crate::{
+    create_hf_repo, json_f64, json_str, json_u64, load_weight_files, parse_config_json,
+    set_last_error,
+};
 
 pub struct WhisperPipelineWrapper {
     model: m::model::Whisper,
@@ -43,8 +46,7 @@ fn load_whisper_model(
     let repo = create_hf_repo(model_id, cache_dir)?;
 
     let config_path = repo.get("config.json")?;
-    let whisper_config: Config =
-        serde_json::from_reader(std::fs::File::open(&config_path)?)?;
+    let whisper_config: Config = serde_json::from_reader(std::fs::File::open(&config_path)?)?;
 
     let tokenizer_path = repo.get("tokenizer.json")?;
     let tokenizer = tokenizers::Tokenizer::from_file(&tokenizer_path)
@@ -87,9 +89,10 @@ fn transcribe(
     let sample_rate = spec.sample_rate;
 
     let pcm_data: Vec<f32> = match spec.sample_format {
-        hound::SampleFormat::Float => {
-            reader.into_samples::<f32>().filter_map(|s| s.ok()).collect()
-        }
+        hound::SampleFormat::Float => reader
+            .into_samples::<f32>()
+            .filter_map(|s| s.ok())
+            .collect(),
         hound::SampleFormat::Int => {
             let bits = spec.bits_per_sample;
             let max = (1 << (bits - 1)) as f32;
@@ -102,11 +105,7 @@ fn transcribe(
     };
 
     if sample_rate != m::SAMPLE_RATE as u32 {
-        anyhow::bail!(
-            "audio must be {}Hz, got {}Hz",
-            m::SAMPLE_RATE,
-            sample_rate
-        );
+        anyhow::bail!("audio must be {}Hz, got {}Hz", m::SAMPLE_RATE, sample_rate);
     }
 
     // Convert to mel spectrogram
@@ -114,7 +113,11 @@ fn transcribe(
     let mel_len = mel.len();
     let mel = Tensor::from_vec(
         mel,
-        (1, wrapper.config.num_mel_bins, mel_len / wrapper.config.num_mel_bins),
+        (
+            1,
+            wrapper.config.num_mel_bins,
+            mel_len / wrapper.config.num_mel_bins,
+        ),
         &wrapper.device,
     )?;
 
@@ -161,16 +164,24 @@ fn transcribe(
     // Autoregressive decoding
     for i in 0..sample_len {
         let tokens_t = Tensor::new(tokens.as_slice(), &wrapper.device)?.unsqueeze(0)?;
-        let ys = wrapper.model.decoder.forward(&tokens_t, &audio_features, i == 0)?;
-        let logits = wrapper.model.decoder.final_linear(&ys.i(..1)?)?.i(0)?.i(ys.dim(1)? - 1)?;
+        let ys = wrapper
+            .model
+            .decoder
+            .forward(&tokens_t, &audio_features, i == 0)?;
+        let logits = wrapper
+            .model
+            .decoder
+            .final_linear(&ys.i(..1)?)?
+            .i(0)?
+            .i(ys.dim(1)? - 1)?;
 
         let logits = logits.broadcast_add(&suppress_tokens)?;
 
         let next_token = if temperature > 0.0 {
             let prs = softmax(&(&logits / temperature)?, 0)?;
             let prs_vec: Vec<f32> = prs.to_vec1()?;
-            let distr = WeightedIndex::new(&prs_vec)
-                .map_err(|e| anyhow::anyhow!("sampling error: {e}"))?;
+            let distr =
+                WeightedIndex::new(&prs_vec).map_err(|e| anyhow::anyhow!("sampling error: {e}"))?;
             distr.sample(&mut rng) as u32
         } else {
             let logits_vec: Vec<f32> = logits.to_vec1()?;
@@ -218,9 +229,7 @@ fn token_id(tokenizer: &tokenizers::Tokenizer, token: &str) -> anyhow::Result<u3
 }
 
 #[no_mangle]
-pub extern "C" fn new_whisper_pipeline(
-    config_json: *const c_char,
-) -> *mut WhisperPipelineWrapper {
+pub extern "C" fn new_whisper_pipeline(config_json: *const c_char) -> *mut WhisperPipelineWrapper {
     let config = match parse_config_json(config_json) {
         Ok(c) => c,
         Err(e) => {
@@ -324,8 +333,7 @@ pub extern "C" fn free_whisper_result(result: *mut WhisperResult) {
                 drop(CString::from_raw(r.text));
             }
             if !r.segments.is_null() {
-                let segments =
-                    Vec::from_raw_parts(r.segments, r.segment_count, r.segment_count);
+                let segments = Vec::from_raw_parts(r.segments, r.segment_count, r.segment_count);
                 for seg in segments {
                     if !seg.text.is_null() {
                         drop(CString::from_raw(seg.text));

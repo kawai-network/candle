@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
 
-use crate::{json_str, parse_config_json, set_last_error, create_hf_repo_with_revision, load_weight_files};
 use crate::image_utils;
+use crate::{
+    create_hf_repo_with_revision, json_str, load_weight_files, parse_config_json, set_last_error,
+};
 
 pub struct ClipPipelineWrapper {
     model: candle_transformers::models::clip::ClipModel,
@@ -31,9 +33,9 @@ pub struct ClipEmbeddingResult {
 fn parse_clip_config(
     config_data: &serde_json::Value,
 ) -> anyhow::Result<candle_transformers::models::clip::ClipConfig> {
+    use candle_transformers::models::clip::text_model::Activation;
     use candle_transformers::models::clip::text_model::ClipTextConfig;
     use candle_transformers::models::clip::vision_model::ClipVisionConfig;
-    use candle_transformers::models::clip::text_model::Activation;
 
     let tc = config_data
         .get("text_config")
@@ -76,10 +78,7 @@ fn parse_clip_config(
         activation: Activation::QuickGelu,
     };
 
-    let image_size = vc
-        .get("image_size")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(224) as usize;
+    let image_size = vc.get("image_size").and_then(|v| v.as_u64()).unwrap_or(224) as usize;
 
     let vision_config = ClipVisionConfig {
         embed_dim: vc
@@ -104,15 +103,9 @@ fn parse_clip_config(
             .or_else(|| config_data.get("projection_dim"))
             .and_then(|v| v.as_u64())
             .unwrap_or(512) as usize,
-        num_channels: vc
-            .get("num_channels")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(3) as usize,
+        num_channels: vc.get("num_channels").and_then(|v| v.as_u64()).unwrap_or(3) as usize,
         image_size,
-        patch_size: vc
-            .get("patch_size")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(32) as usize,
+        patch_size: vc.get("patch_size").and_then(|v| v.as_u64()).unwrap_or(32) as usize,
     };
 
     Ok(candle_transformers::models::clip::ClipConfig {
@@ -145,9 +138,7 @@ fn tokenize_clip(
 }
 
 #[no_mangle]
-pub extern "C" fn new_clip_pipeline(
-    config_json: *const c_char,
-) -> *mut ClipPipelineWrapper {
+pub extern "C" fn new_clip_pipeline(config_json: *const c_char) -> *mut ClipPipelineWrapper {
     let config = match parse_config_json(config_json) {
         Ok(c) => c,
         Err(e) => {
@@ -176,21 +167,16 @@ fn load_clip_model(
         anyhow::bail!("model_id is required");
     }
 
-    let cache_dir = config
-        .get("cache_dir")
-        .and_then(|v| v.as_str());
+    let cache_dir = config.get("cache_dir").and_then(|v| v.as_str());
 
     // For openai CLIP models, safetensors are on refs/pr/15
-    let revision = config
-        .get("revision")
-        .and_then(|v| v.as_str())
-        .or_else(|| {
-            if model_id.starts_with("openai/clip-") {
-                Some("refs/pr/15")
-            } else {
-                None
-            }
-        });
+    let revision = config.get("revision").and_then(|v| v.as_str()).or_else(|| {
+        if model_id.starts_with("openai/clip-") {
+            Some("refs/pr/15")
+        } else {
+            None
+        }
+    });
 
     let repo = create_hf_repo_with_revision(model_id, cache_dir, revision)?;
 
@@ -337,9 +323,7 @@ pub extern "C" fn run_clip_embed_text(
     }
 
     let wrapper = unsafe { &*wrapper };
-    let text_str = unsafe { CStr::from_ptr(text) }
-        .to_str()
-        .unwrap_or_default();
+    let text_str = unsafe { CStr::from_ptr(text) }.to_str().unwrap_or_default();
 
     match clip_embed_text_inner(wrapper, text_str) {
         Ok(vec) => {
@@ -357,10 +341,7 @@ pub extern "C" fn run_clip_embed_text(
     }
 }
 
-fn clip_embed_text_inner(
-    wrapper: &ClipPipelineWrapper,
-    text: &str,
-) -> anyhow::Result<Vec<f32>> {
+fn clip_embed_text_inner(wrapper: &ClipPipelineWrapper, text: &str) -> anyhow::Result<Vec<f32>> {
     let input_ids = tokenize_clip(&wrapper.tokenizer, text, 77, &wrapper.device)?;
     let features = wrapper.model.get_text_features(&input_ids)?;
     let vec: Vec<f32> = features.squeeze(0)?.to_vec1()?;

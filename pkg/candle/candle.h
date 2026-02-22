@@ -366,4 +366,56 @@ static inline void call_free_translation_result(void* f, TranslationResult* r) {
     ((free_translation_result_t)f)(r);
 }
 
+// --- Video Generation ---
+
+typedef struct {
+    void* _opaque;
+} VideoPipelineWrapper;
+
+typedef struct {
+    float* data;
+    size_t height;
+    size_t width;
+    size_t channels;
+} VideoFrame;
+
+typedef struct {
+    VideoFrame* frames;
+    size_t frame_count;
+    size_t fps;
+    char* error;
+} VideoResult;
+
+typedef VideoPipelineWrapper* (*new_video_pipeline_t)(const char* config_json);
+typedef VideoResult* (*run_video_generation_t)(VideoPipelineWrapper* wrapper, const char* prompt, const char* params_json);
+typedef void (*free_video_pipeline_t)(VideoPipelineWrapper* wrapper);
+typedef void (*free_video_result_t)(VideoResult* result);
+typedef int (*save_video_as_gif_t)(const VideoResult* result, const char* output_path);
+typedef int (*save_video_frames_t)(const VideoResult* result, const char* output_dir);
+
+// Video helpers
+static inline VideoPipelineWrapper* call_new_video_pipeline(void* f, const char* config_json) {
+    return ((new_video_pipeline_t)f)(config_json);
+}
+
+static inline VideoResult* call_run_video_generation(void* f, VideoPipelineWrapper* w, const char* prompt, const char* params_json) {
+    return ((run_video_generation_t)f)(w, prompt, params_json);
+}
+
+static inline void call_free_video_pipeline(void* f, VideoPipelineWrapper* w) {
+    ((free_video_pipeline_t)f)(w);
+}
+
+static inline void call_free_video_result(void* f, VideoResult* r) {
+    ((free_video_result_t)f)(r);
+}
+
+static inline int call_save_video_as_gif(void* f, const VideoResult* r, const char* output_path) {
+    return ((save_video_as_gif_t)f)(r, output_path);
+}
+
+static inline int call_save_video_frames(void* f, const VideoResult* r, const char* output_dir) {
+    return ((save_video_frames_t)f)(r, output_dir);
+}
+
 #endif /* CANDLE_H */

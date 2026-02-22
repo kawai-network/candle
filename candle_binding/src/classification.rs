@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::VarBuilder;
 
-use crate::{json_str, json_u64, parse_config_json, set_last_error, create_hf_repo, load_weight_files};
 use crate::image_utils;
+use crate::{
+    create_hf_repo, json_str, json_u64, load_weight_files, parse_config_json, set_last_error,
+};
 
 /// Opaque wrapper for a classification pipeline.
 pub struct ClassificationPipelineWrapper {
@@ -64,9 +66,7 @@ fn load_classification_model(
         anyhow::bail!("model_id is required");
     }
 
-    let cache_dir = config
-        .get("cache_dir")
-        .and_then(|v| v.as_str());
+    let cache_dir = config.get("cache_dir").and_then(|v| v.as_str());
 
     let repo = create_hf_repo(model_id, cache_dir)?;
 
@@ -99,20 +99,21 @@ fn load_classification_model(
     let dtype = DType::F32;
     let vb = unsafe { VarBuilder::from_mmaped_safetensors(&weight_files, dtype, device)? };
 
-    let model: Box<dyn ClassificationModel> =
-        if model_type == "vit" || model_type.contains("vit") {
-            let cfg: candle_transformers::models::vit::Config =
-                serde_json::from_reader(std::fs::File::open(&config_path)?)?;
-            let m = candle_transformers::models::vit::Model::new(&cfg, num_labels, vb)?;
-            Box::new(ViTModel { model: m })
-        } else if model_type == "segformer" {
-            let cfg: candle_transformers::models::segformer::Config =
-                serde_json::from_reader(std::fs::File::open(&config_path)?)?;
-            let m = candle_transformers::models::segformer::ImageClassificationModel::new(&cfg, num_labels, vb)?;
-            Box::new(SegFormerClassModel { model: m })
-        } else {
-            anyhow::bail!("unsupported classification model_type: {}", model_type);
-        };
+    let model: Box<dyn ClassificationModel> = if model_type == "vit" || model_type.contains("vit") {
+        let cfg: candle_transformers::models::vit::Config =
+            serde_json::from_reader(std::fs::File::open(&config_path)?)?;
+        let m = candle_transformers::models::vit::Model::new(&cfg, num_labels, vb)?;
+        Box::new(ViTModel { model: m })
+    } else if model_type == "segformer" {
+        let cfg: candle_transformers::models::segformer::Config =
+            serde_json::from_reader(std::fs::File::open(&config_path)?)?;
+        let m = candle_transformers::models::segformer::ImageClassificationModel::new(
+            &cfg, num_labels, vb,
+        )?;
+        Box::new(SegFormerClassModel { model: m })
+    } else {
+        anyhow::bail!("unsupported classification model_type: {}", model_type);
+    };
 
     Ok((model, image_size, id2label))
 }

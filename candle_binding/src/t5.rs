@@ -7,7 +7,10 @@ use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::t5;
 use tokenizers::Tokenizer;
 
-use crate::{create_hf_repo_with_revision, json_f64, json_str, json_u64, load_weight_files, parse_config_json, set_last_error};
+use crate::{
+    create_hf_repo_with_revision, json_f64, json_str, json_u64, load_weight_files,
+    parse_config_json, set_last_error,
+};
 
 /// Opaque wrapper for FFI.
 pub struct T5PipelineInner {
@@ -32,8 +35,11 @@ fn default_revision(model_id: &str) -> &'static str {
     match model_id {
         "t5-small" => "refs/pr/15",
         "t5-base" | "t5-large" | "t5-3b" | "t5-11b" => "main",
-        "google/flan-t5-small" | "google/flan-t5-base" | "google/flan-t5-large"
-        | "google/flan-t5-xl" | "google/flan-t5-xxl" => "main",
+        "google/flan-t5-small"
+        | "google/flan-t5-base"
+        | "google/flan-t5-large"
+        | "google/flan-t5-xl"
+        | "google/flan-t5-xxl" => "main",
         "google/flan-ul2" => "main",
         _ if model_id.starts_with("google/mt5-") => {
             // mt5 models typically use a specific PR branch
@@ -45,7 +51,10 @@ fn default_revision(model_id: &str) -> &'static str {
 
 /// Determine if the model needs sharded weight files.
 fn needs_sharded_weights(model_id: &str) -> bool {
-    matches!(model_id, "google/flan-t5-xxl" | "google/flan-ul2" | "t5-3b" | "t5-11b")
+    matches!(
+        model_id,
+        "google/flan-t5-xxl" | "google/flan-ul2" | "t5-3b" | "t5-11b"
+    )
 }
 
 fn create_pipeline(config_json: *const c_char) -> anyhow::Result<Box<T5PipelineInner>> {
@@ -54,7 +63,10 @@ fn create_pipeline(config_json: *const c_char) -> anyhow::Result<Box<T5PipelineI
     let model_id = json_str(&cfg, "model_id", "t5-small");
     let cache_dir = cfg.get("cache_dir").and_then(|v| v.as_str());
     let revision = cfg.get("revision").and_then(|v| v.as_str());
-    let disable_cache = cfg.get("disable_cache").and_then(|v| v.as_bool()).unwrap_or(false);
+    let disable_cache = cfg
+        .get("disable_cache")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     let device = Device::Cpu;
 
@@ -94,7 +106,11 @@ fn create_pipeline(config_json: *const c_char) -> anyhow::Result<Box<T5PipelineI
     }))
 }
 
-fn run_generate(inner: &mut T5PipelineInner, prompt: &str, params_json: Option<&str>) -> anyhow::Result<String> {
+fn run_generate(
+    inner: &mut T5PipelineInner,
+    prompt: &str,
+    params_json: Option<&str>,
+) -> anyhow::Result<String> {
     let max_tokens = if let Some(pj) = params_json {
         let params: serde_json::Value = serde_json::from_str(pj)?;
         let max = json_u64(&params, "max_tokens", 256) as usize;
@@ -109,7 +125,11 @@ fn run_generate(inner: &mut T5PipelineInner, prompt: &str, params_json: Option<&
     let temperature = if let Some(pj) = params_json {
         let params: serde_json::Value = serde_json::from_str(pj)?;
         let t = json_f64(&params, "temperature", 0.0);
-        if t <= 0.0 { None } else { Some(t) }
+        if t <= 0.0 {
+            None
+        } else {
+            Some(t)
+        }
     } else {
         None
     };

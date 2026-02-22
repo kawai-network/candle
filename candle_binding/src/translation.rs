@@ -134,7 +134,11 @@ fn create_pipeline(config_json: *const c_char) -> anyhow::Result<Box<Translation
     }))
 }
 
-fn run_translate(inner: &mut TranslationPipelineInner, text: &str, params_json: Option<&str>) -> anyhow::Result<String> {
+fn run_translate(
+    inner: &mut TranslationPipelineInner,
+    text: &str,
+    params_json: Option<&str>,
+) -> anyhow::Result<String> {
     let max_tokens = if let Some(pj) = params_json {
         let params: serde_json::Value = serde_json::from_str(pj)?;
         json_u64(&params, "max_tokens", 512) as usize
@@ -192,7 +196,9 @@ fn run_translate(inner: &mut TranslationPipelineInner, text: &str, params_json: 
 // --- FFI ---
 
 #[no_mangle]
-pub extern "C" fn new_translation_pipeline(config_json: *const c_char) -> *mut TranslationPipelineWrapper {
+pub extern "C" fn new_translation_pipeline(
+    config_json: *const c_char,
+) -> *mut TranslationPipelineWrapper {
     match create_pipeline(config_json) {
         Ok(inner) => {
             let wrapper = Box::new(TranslationPipelineWrapper {

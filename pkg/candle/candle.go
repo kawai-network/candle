@@ -33,19 +33,19 @@ var (
 	fnFreeClassificationResult   unsafe.Pointer
 
 	// CLIP
-	fnNewClipPipeline        unsafe.Pointer
-	fnRunClipScore           unsafe.Pointer
-	fnRunClipEmbedImage      unsafe.Pointer
-	fnRunClipEmbedText       unsafe.Pointer
-	fnFreeClipPipeline       unsafe.Pointer
-	fnFreeClipScoreResult    unsafe.Pointer
+	fnNewClipPipeline         unsafe.Pointer
+	fnRunClipScore            unsafe.Pointer
+	fnRunClipEmbedImage       unsafe.Pointer
+	fnRunClipEmbedText        unsafe.Pointer
+	fnFreeClipPipeline        unsafe.Pointer
+	fnFreeClipScoreResult     unsafe.Pointer
 	fnFreeClipEmbeddingResult unsafe.Pointer
 
 	// Depth Estimation
-	fnNewDepthPipeline  unsafe.Pointer
+	fnNewDepthPipeline   unsafe.Pointer
 	fnRunDepthEstimation unsafe.Pointer
-	fnFreeDepthPipeline unsafe.Pointer
-	fnFreeDepthResult   unsafe.Pointer
+	fnFreeDepthPipeline  unsafe.Pointer
+	fnFreeDepthResult    unsafe.Pointer
 
 	// Segmentation
 	fnNewSegmentationPipeline  unsafe.Pointer
@@ -54,10 +54,10 @@ var (
 	fnFreeSegmentationResult   unsafe.Pointer
 
 	// Whisper
-	fnNewWhisperPipeline  unsafe.Pointer
+	fnNewWhisperPipeline   unsafe.Pointer
 	fnRunWhisperTranscribe unsafe.Pointer
-	fnFreeWhisperPipeline unsafe.Pointer
-	fnFreeWhisperResult   unsafe.Pointer
+	fnFreeWhisperPipeline  unsafe.Pointer
+	fnFreeWhisperResult    unsafe.Pointer
 
 	// T5
 	fnNewT5Pipeline  unsafe.Pointer
@@ -70,6 +70,14 @@ var (
 	fnRunTranslation          unsafe.Pointer
 	fnFreeTranslationPipeline unsafe.Pointer
 	fnFreeTranslationResult   unsafe.Pointer
+
+	// Video Generation
+	fnNewVideoPipeline   unsafe.Pointer
+	fnRunVideoGeneration unsafe.Pointer
+	fnFreeVideoPipeline  unsafe.Pointer
+	fnFreeVideoResult    unsafe.Pointer
+	fnSaveVideoAsGif     unsafe.Pointer
+	fnSaveVideoFrames    unsafe.Pointer
 )
 
 // lastError retrieves the last error from the Rust binding.

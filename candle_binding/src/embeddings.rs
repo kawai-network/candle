@@ -108,10 +108,7 @@ fn load_embedding_model(
     Ok((model, tokenizer, normalize))
 }
 
-fn embed_text(
-    wrapper: &EmbeddingPipelineWrapper,
-    texts: &[&str],
-) -> anyhow::Result<Vec<Vec<f32>>> {
+fn embed_text(wrapper: &EmbeddingPipelineWrapper, texts: &[&str]) -> anyhow::Result<Vec<Vec<f32>>> {
     let mut all_embeddings = Vec::with_capacity(texts.len());
 
     for text in texts {
@@ -191,9 +188,7 @@ pub extern "C" fn run_embedding(
     }
 
     let wrapper = unsafe { &*wrapper };
-    let text_str = unsafe { CStr::from_ptr(text) }
-        .to_str()
-        .unwrap_or_default();
+    let text_str = unsafe { CStr::from_ptr(text) }.to_str().unwrap_or_default();
 
     match embed_text(wrapper, &[text_str]) {
         Ok(embeddings) => {

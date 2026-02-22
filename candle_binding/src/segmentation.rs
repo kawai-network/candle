@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::VarBuilder;
 
-use crate::{json_str, json_u64, parse_config_json, set_last_error, create_hf_repo, load_weight_files};
 use crate::image_utils;
+use crate::{
+    create_hf_repo, json_str, json_u64, load_weight_files, parse_config_json, set_last_error,
+};
 
 pub struct SegmentationPipelineWrapper {
     model: candle_transformers::models::segformer::SemanticSegmentationModel,

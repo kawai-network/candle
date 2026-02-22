@@ -7,13 +7,15 @@ import "C"
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"runtime"
 	"unsafe"
 )
 
 type VideoConfig struct {
-	ModelID  string `json:"model_id"`
-	CacheDir string `json:"cache_dir,omitempty"`
+	ModelID        string `json:"model_id"`
+	CacheDir       string `json:"cache_dir,omitempty"`
+	LibraryVersion string `json:"library_version,omitempty"`
 }
 
 type VideoGenerationParams struct {
@@ -49,8 +51,11 @@ func NewVideoPipeline(cfg VideoConfig) (*VideoPipeline, error) {
 	if !initialized {
 		return nil, errors.New("candle library not initialized")
 	}
+
 	if !videoAvailable || fnNewVideoPipeline == nil {
-		return nil, errors.New("video pipeline is not available in the loaded candle binding")
+		if err := initVideoLibrary(cfg.LibraryVersion); err != nil {
+			return nil, fmt.Errorf("video pipeline not available: %w (set CANDLE_LIB_PATH or the library will be downloaded automatically)", err)
+		}
 	}
 
 	configJSON, err := json.Marshal(cfg)

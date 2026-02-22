@@ -1,0 +1,117 @@
+name: Release Libraries
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build basic library
+        working-directory: candle_binding
+        run: cargo build --release
+
+      - name: Compress basic library
+        run: |
+          gzip -c candle_binding/target/release/libcandle_binding.so > libcandle_binding-linux-amd64-basic.so.gz
+
+      - name: Build video-enabled library
+        working-directory: candle_binding
+        run: cargo build --release --features video || cargo build --release
+
+      - name: Compress video library
+        run: |
+          gzip -c candle_binding/target/release/libcandle_binding.so > libcandle_binding-linux-amd64-video.so.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-libs
+          path: |
+            libcandle_binding-linux-amd64-basic.so.gz
+            libcandle_binding-linux-amd64-video.so.gz
+
+  build-macos-arm:
+    name: Build macOS ARM64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build basic library
+        working-directory: candle_binding
+        run: cargo build --release
+
+      - name: Compress basic library
+        run: |
+          gzip -c candle_binding/target/release/libcandle_binding.dylib > libcandle_binding-darwin-arm64-basic.dylib.gz
+
+      - name: Compress video library placeholder
+        run: |
+          echo "placeholder" > libcandle_binding-darwin-arm64-video.dylib.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm-libs
+          path: |
+            libcandle_binding-darwin-arm64-basic.dylib.gz
+            libcandle_binding-darwin-arm64-video.dylib.gz
+
+  release:
+    name: Create Release
+    needs: [build-linux, build-macos-arm]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event.inputs.version != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-libs
+          path: ./libs/
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-arm-libs
+          path: ./libs/
+
+      - name: List files
+        run: ls -la ./libs/
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./libs/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: Library Release ${{ github.event.inputs.version }}
+          files: ./libs/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

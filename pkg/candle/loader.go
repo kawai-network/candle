@@ -138,6 +138,58 @@ func initFromPath(libPath string) error {
 	return nil
 }
 
+// initVideoLibrary loads the video-enabled library from GitHub releases or local cache.
+// This is called automatically when NewVideoPipeline is used without video support.
+func initVideoLibrary(version string) error {
+	if videoAvailable {
+		return nil
+	}
+
+	libPath, err := EnsureVideoLibrary(version)
+	if err != nil {
+		return fmt.Errorf("failed to get video library: %w", err)
+	}
+
+	videoAvailable = false
+	fnNewVideoPipeline = nil
+	fnRunVideoGeneration = nil
+	fnFreeVideoPipeline = nil
+	fnFreeVideoResult = nil
+	fnSaveVideoAsGif = nil
+	fnSaveVideoFrames = nil
+
+	cPath := C.CString(libPath)
+	defer C.free(unsafe.Pointer(cPath))
+	dlHandle = C.open_lib(cPath)
+	if dlHandle == nil {
+		cErr := C.get_dlerror()
+		return fmt.Errorf("dlopen failed: %s", C.GoString(cErr))
+	}
+
+	var symErr error
+	if fnNewVideoPipeline, symErr = loadSym("new_video_pipeline"); symErr != nil {
+		return fmt.Errorf("video library missing new_video_pipeline: %w", symErr)
+	}
+	if fnRunVideoGeneration, symErr = loadSym("run_video_generation"); symErr != nil {
+		return fmt.Errorf("video library missing run_video_generation: %w", symErr)
+	}
+	if fnFreeVideoPipeline, symErr = loadSym("free_video_pipeline"); symErr != nil {
+		return fmt.Errorf("video library missing free_video_pipeline: %w", symErr)
+	}
+	if fnFreeVideoResult, symErr = loadSym("free_video_result"); symErr != nil {
+		return fmt.Errorf("video library missing free_video_result: %w", symErr)
+	}
+	if fnSaveVideoAsGif, symErr = loadSym("save_video_as_gif"); symErr != nil {
+		return fmt.Errorf("video library missing save_video_as_gif: %w", symErr)
+	}
+	if fnSaveVideoFrames, symErr = loadSym("save_video_frames"); symErr != nil {
+		return fmt.Errorf("video library missing save_video_frames: %w", symErr)
+	}
+
+	videoAvailable = true
+	return nil
+}
+
 func loadSym(name string) (unsafe.Pointer, error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))

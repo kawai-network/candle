@@ -115,7 +115,9 @@ func (p *VideoPipeline) Generate(prompt string, params VideoGenerationParams) (*
 		data := unsafe.Slice(frame.data, dataSize)
 
 		frameData := make([]float32, dataSize)
-		copy(frameData, data)
+		for j := range data {
+			frameData[j] = float32(data[j])
+		}
 
 		result.Frames[i] = VideoFrame{
 			Data:     frameData,

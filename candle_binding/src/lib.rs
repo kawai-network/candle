@@ -11,6 +11,7 @@ mod segmentation;
 mod t5;
 mod text_generation;
 mod translation;
+#[cfg(feature = "video")]
 mod video;
 mod whisper;
 
@@ -23,6 +24,7 @@ pub use segmentation::*;
 pub use t5::*;
 pub use text_generation::*;
 pub use translation::*;
+#[cfg(feature = "video")]
 pub use video::*;
 pub use whisper::*;
 

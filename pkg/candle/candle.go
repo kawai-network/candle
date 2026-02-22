@@ -78,6 +78,8 @@ var (
 	fnFreeVideoResult    unsafe.Pointer
 	fnSaveVideoAsGif     unsafe.Pointer
 	fnSaveVideoFrames    unsafe.Pointer
+
+	videoAvailable bool
 )
 
 // lastError retrieves the last error from the Rust binding.

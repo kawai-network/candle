@@ -47,6 +47,9 @@ func NewVideoPipeline(cfg VideoConfig) (*VideoPipeline, error) {
 	if !initialized {
 		return nil, errors.New("candle library not initialized")
 	}
+	if !videoAvailable || fnNewVideoPipeline == nil {
+		return nil, errors.New("video pipeline is not available in the loaded candle binding")
+	}
 
 	configJSON, err := json.Marshal(cfg)
 	if err != nil {

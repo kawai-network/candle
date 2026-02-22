@@ -162,6 +162,8 @@ jobs:
 
       - name: Build Rust binding with video support
         working-directory: candle_binding
+        env:
+          CUDA_COMPUTE_CAP: "80"
         run: cargo build --release --features video
 
       - name: Run video tests

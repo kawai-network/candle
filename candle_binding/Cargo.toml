@@ -29,4 +29,4 @@ byteorder = "1"
 hound = "3.5"
 rand = "0.8"
 gif = "0.14"
-candle-video = { git = "https://github.com/kawai-network/candle-video", default-features = false, optional = true }
+candle-video = { git = "https://github.com/getkawai/candle-video", default-features = false, optional = true }

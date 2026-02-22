@@ -24,29 +24,19 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build basic library
+      - name: Build library
         working-directory: candle_binding
         run: cargo build --release
 
-      - name: Compress basic library
+      - name: Compress library
         run: |
-          gzip -c candle_binding/target/release/libcandle_binding.so > libcandle_binding-linux-amd64-basic.so.gz
-
-      - name: Build video-enabled library
-        working-directory: candle_binding
-        run: cargo build --release --features video || cargo build --release
-
-      - name: Compress video library
-        run: |
-          gzip -c candle_binding/target/release/libcandle_binding.so > libcandle_binding-linux-amd64-video.so.gz
+          gzip -c candle_binding/target/release/libcandle_binding.so > libcandle_binding-linux-amd64.so.gz
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-libs
-          path: |
-            libcandle_binding-linux-amd64-basic.so.gz
-            libcandle_binding-linux-amd64-video.so.gz
+          path: libcandle_binding-linux-amd64.so.gz
 
   build-macos-arm:
     name: Build macOS ARM64
@@ -58,25 +48,19 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build basic library
+      - name: Build library
         working-directory: candle_binding
         run: cargo build --release
 
-      - name: Compress basic library
+      - name: Compress library
         run: |
-          gzip -c candle_binding/target/release/libcandle_binding.dylib > libcandle_binding-darwin-arm64-basic.dylib.gz
-
-      - name: Compress video library placeholder
-        run: |
-          echo "placeholder" > libcandle_binding-darwin-arm64-video.dylib.gz
+          gzip -c candle_binding/target/release/libcandle_binding.dylib > libcandle_binding-darwin-arm64.dylib.gz
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-arm-libs
-          path: |
-            libcandle_binding-darwin-arm64-basic.dylib.gz
-            libcandle_binding-darwin-arm64-video.dylib.gz
+          path: libcandle_binding-darwin-arm64.dylib.gz
 
   build-windows:
     name: Build Windows
@@ -90,27 +74,20 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Build basic library
+      - name: Build library
         working-directory: candle_binding
         run: cargo build --release --target x86_64-pc-windows-msvc
 
-      - name: Compress basic library
+      - name: Compress library
         shell: bash
         run: |
-          gzip -c candle_binding/target/x86_64-pc-windows-msvc/release/candle_binding.dll > libcandle_binding-windows-amd64-basic.dll.gz
-
-      - name: Compress video library placeholder
-        shell: bash
-        run: |
-          echo "placeholder" > libcandle_binding-windows-amd64-video.dll.gz
+          gzip -c candle_binding/target/x86_64-pc-windows-msvc/release/candle_binding.dll > libcandle_binding-windows-amd64.dll.gz
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-libs
-          path: |
-            libcandle_binding-windows-amd64-basic.dll.gz
-            libcandle_binding-windows-amd64-video.dll.gz
+          path: libcandle_binding-windows-amd64.dll.gz
 
   release:
     name: Create Release

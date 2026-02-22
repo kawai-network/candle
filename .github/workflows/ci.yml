@@ -58,9 +58,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Clone candle (path dependency)
-        run: git clone --depth 1 https://github.com/huggingface/candle.git ../candle
-
       - name: Check Rust code
         working-directory: candle_binding
         run: cargo check --release

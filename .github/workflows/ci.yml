@@ -154,6 +154,8 @@ jobs:
 
       - name: Run video tests
         shell: bash
+        env:
+          CANDLE_LIB_PATH: ${{ github.workspace }}/candle_binding/target/release/libcandle_binding.so
         run: |
           go test -v -count=1 -timeout=30m -run TestVideo ./pkg/candle/... 2>&1 | tee /tmp/video-tests.log
 

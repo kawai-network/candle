@@ -42,9 +42,17 @@ var (
 
 // Init loads the candle binding shared library. It is safe to call multiple times;
 // subsequent calls are no-ops. Called automatically via init().
+//
+// If CANDLE_LIB_PATH environment variable is set, it will load the library from
+// that path instead of the embedded one. This is useful for testing with custom builds.
 func Init() error {
 	if initialized {
 		return nil
+	}
+
+	// Check for custom library path (for testing with custom builds)
+	if customPath := os.Getenv("CANDLE_LIB_PATH"); customPath != "" {
+		return initFromPath(customPath)
 	}
 
 	goOS := runtime.GOOS
@@ -89,6 +97,31 @@ func Init() error {
 
 	// dlopen the binding library
 	cPath := C.CString(destPath)
+	defer C.free(unsafe.Pointer(cPath))
+	dlHandle = C.open_lib(cPath)
+	if dlHandle == nil {
+		cErr := C.get_dlerror()
+		return fmt.Errorf("dlopen failed: %s", C.GoString(cErr))
+	}
+
+	// Load all symbols
+	if err := loadAllSymbols(); err != nil {
+		return err
+	}
+
+	initialized = true
+	return nil
+}
+
+// initFromPath loads the library from a custom path (for testing with custom builds).
+func initFromPath(libPath string) error {
+	// Check if file exists
+	if _, err := os.Stat(libPath); os.IsNotExist(err) {
+		return fmt.Errorf("library not found: %s", libPath)
+	}
+
+	// dlopen the library
+	cPath := C.CString(libPath)
 	defer C.free(unsafe.Pointer(cPath))
 	dlHandle = C.open_lib(cPath)
 	if dlHandle == nil {

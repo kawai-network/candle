@@ -123,16 +123,29 @@ func getLibraryName() (string, error) {
 		default:
 			return "", fmt.Errorf("unsupported linux architecture: %s", goArch)
 		}
+	case "windows":
+		switch goArch {
+		case "amd64":
+			return "libcandle_binding-windows-amd64", nil
+		case "arm64":
+			return "libcandle_binding-windows-arm64", nil
+		default:
+			return "", fmt.Errorf("unsupported windows architecture: %s", goArch)
+		}
 	default:
 		return "", fmt.Errorf("unsupported platform: %s/%s", goOS, goArch)
 	}
 }
 
 func getLibraryExtension() string {
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		return "dylib"
+	case "windows":
+		return "dll"
+	default:
+		return "so"
 	}
-	return "so"
 }
 
 type LibraryVariant string

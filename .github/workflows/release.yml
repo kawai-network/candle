@@ -75,9 +75,71 @@ jobs:
             libcandle_binding-darwin-arm64-basic.dylib.gz
             libcandle_binding-darwin-arm64-video.dylib.gz
 
+  build-macos-amd:
+    name: Build macOS AMD64
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build basic library
+        working-directory: candle_binding
+        run: cargo build --release
+
+      - name: Compress basic library
+        run: |
+          gzip -c candle_binding/target/release/libcandle_binding.dylib > libcandle_binding-darwin-amd64-basic.dylib.gz
+
+      - name: Compress video library placeholder
+        run: |
+          echo "placeholder" > libcandle_binding-darwin-amd64-video.dylib.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-amd-libs
+          path: |
+            libcandle_binding-darwin-amd64-basic.dylib.gz
+            libcandle_binding-darwin-amd64-video.dylib.gz
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build basic library
+        working-directory: candle_binding
+        run: cargo build --release
+
+      - name: Compress basic library
+        shell: bash
+        run: |
+          gzip -c candle_binding/target/release/candle_binding.dll > libcandle_binding-windows-amd64-basic.dll.gz
+
+      - name: Compress video library placeholder
+        shell: bash
+        run: |
+          echo "placeholder" > libcandle_binding-windows-amd64-video.dll.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-libs
+          path: |
+            libcandle_binding-windows-amd64-basic.dll.gz
+            libcandle_binding-windows-amd64-video.dll.gz
+
   release:
     name: Create Release
-    needs: [build-linux, build-macos-arm]
+    needs: [build-linux, build-macos-arm, build-macos-amd, build-windows]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || github.event.inputs.version != ''
     steps:
@@ -89,10 +151,22 @@ jobs:
           name: linux-libs
           path: ./libs/
 
-      - name: Download macOS artifacts
+      - name: Download macOS ARM artifacts
         uses: actions/download-artifact@v4
         with:
           name: macos-arm-libs
+          path: ./libs/
+
+      - name: Download macOS AMD artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-amd-libs
+          path: ./libs/
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-libs
           path: ./libs/
 
       - name: List files
